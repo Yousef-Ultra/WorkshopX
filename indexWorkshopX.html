@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WorkshopiCore - Review</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --card-bg: #111111;
+            --text-main: #ffffff;
+            --text-muted: #888888;
+            --accent-color: #00f0ff;
+            --success-color: #00ff88;
+            --error-color: #ff3366;
+            --border-color: #333333;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f4f4f9;
+            --card-bg: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #666666;
+            --accent-color: #0055ff;
+            --border-color: #dddddd;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.3s ease, box-shadow 0.5s ease;
+        }
+
+        /* توهج وضع الذكاء الاصطناعي */
+        body.ai-glow {
+            box-shadow: inset 0 0 150px rgba(0, 240, 255, 0.15);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+            z-index: 10;
+        }
+
+        .controls button {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin-left: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .controls button:hover { border-color: var(--accent-color); color: var(--accent-color); }
+
+        /* شريط الوقت للهاردكور (مدمج تحت الهيدر مباشرة) */
+        #timer-bar-container {
+            width: 100%;
+            height: 6px;
+            background-color: var(--bg-color);
+            z-index: 9;
+        }
+        #timer-bar {
+            height: 100%; 
+            background: var(--accent-color); 
+            width: 100%;
+            display: none;
+            box-shadow: 0 0 10px var(--accent-color);
+            transition: width 0.1s linear, background-color 0.3s, box-shadow 0.3s;
+        }
+
+        #setup-screen, #end-screen {
+            flex: 1; display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            padding: 20px; text-align: center;
+        }
+
+        .setup-box {
+            background: var(--card-bg); padding: 30px;
+            border-radius: 15px; border: 1px solid var(--border-color);
+            width: 100%; max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 5;
+        }
+        .setup-box h2 { margin-bottom: 20px; color: var(--accent-color); }
+        .setup-box select, .setup-box button {
+            width: 100%; padding: 12px; margin-bottom: 15px;
+            border-radius: 8px; border: 1px solid var(--border-color);
+            background: var(--bg-color); color: var(--text-main); font-size: 16px;
+        }
+        .start-btn {
+            background: var(--accent-color) !important; color: #000 !important;
+            font-weight: bold; cursor: pointer; border: none !important;
+        }
+
+        #quiz-container {
+            flex: 1; display: none; flex-direction: column;
+            align-items: center; justify-content: center; position: relative;
+            padding: 20px;
+        }
+
+        /* عداد الأسئلة */
+        #question-counter {
+            position: absolute;
+            top: 20px;
+            font-size: 14px;
+            color: var(--accent-color);
+            font-weight: bold;
+            letter-spacing: 2px;
+            z-index: 5;
+        }
+
+        .card {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 20px; padding: 30px; width: 100%; max-width: 500px;
+            text-align: center; position: absolute;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        .question-text { font-size: 20px; margin-bottom: 25px; line-height: 1.5; }
+        
+        .options-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        .option-btn {
+            background: var(--bg-color); border: 1px solid var(--border-color);
+            color: var(--text-main); padding: 15px; border-radius: 10px;
+            font-size: 16px; cursor: pointer; transition: 0.2s; text-align: left;
+        }
+        .option-btn:active { background: var(--border-color); }
+
+        #toast {
+            position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
+            padding: 10px 20px; border-radius: 20px; font-weight: bold;
+            opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100;
+        }
+
+        .hardcore-pulse { animation: pulseBg 1s infinite alternate; }
+        @keyframes pulseBg {
+            from { background-color: var(--bg-color); }
+            to { background-color: #3a0000; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo" style="font-weight: bold; font-size: 22px; letter-spacing: 1px; color: var(--text-main);">WorkshopiCore <span style="color: var(--accent-color);">🗜</span></div>
+        <div class="controls">
+            <button onclick="toggleTheme()" title="Toggle Theme">🌓</button>
+            <button onclick="toggleLang()">🌐 <span id="lang-text">EN</span></button>
+            <button id="skip-btn" style="display:none;" onclick="skipQuestion()">⏭ Skip</button>
+        </div>
+    </header>
+
+    <div id="timer-bar-container">
+        <div id="timer-bar"></div>
+    </div>
+
+    <div id="setup-screen">
+        <div class="setup-box">
+            <h2 data-ar="إعدادات التحدي" data-en="Challenge Setup">Challenge Setup</h2>
+            
+            <select id="sheet-select">
+                <option value="sheet1">Sheet 1</option>
+                <option value="sheet2">Sheet 2</option>
+                <option value="both" data-ar="شامل (كلاهما)" data-en="Comprehensive (Both)">Comprehensive (Both)</option>
+            </select>
+
+            <select id="count-select">
+                <option value="10" data-ar="10 أسئلة سريعة" data-en="10 Quick Questions">10 Quick Questions</option>
+                <option value="all" data-ar="كل الأسئلة" data-en="All Questions">All Questions</option>
+            </select>
+
+            <select id="mode-select">
+                <option value="normal" data-ar="الوضع العادي (هادئ)" data-en="Normal Mode (Chill)">Normal Mode (Chill)</option>
+                <option value="ai" data-ar="وضع الذكاء الاصطناعي (تحدي)" data-en="MechBrain AI Mode">MechBrain AI Mode</option>
+                <option value="hardcore" data-ar="وضع الهاردكور 🔥 (مؤقت)" data-en="Hardcore Mode 🔥">Hardcore Mode 🔥</option>
+            </select>
+
+            <button class="start-btn" onclick="startEngine()" data-ar="ابدأ التحدي 🚀" data-en="Start Engine 🚀">Start Engine 🚀</button>
+        </div>
+    </div>
+
+    <div id="quiz-container">
+        <div id="toast"></div>
+        <div id="question-counter"></div>
+        <div id="card-area" style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;"></div>
+    </div>
+
+    <div id="end-screen" style="display:none;">
+        <div class="setup-box" style="max-width: 500px;">
+            <h2 id="final-score-title">Score</h2>
+            <h1 id="final-score" style="font-size: 48px; margin-bottom: 10px; color: var(--accent-color);">0/0</h1>
+            <p id="final-message" style="font-size: 18px; margin-bottom: 30px;"></p>
+            
+            <button onclick="location.reload()" style="background:var(--border-color); color:var(--text-main); margin-bottom:10px; width:100%; padding:12px; border-radius:8px;">
+                🔄 <span data-ar="إعادة الاختبار" data-en="Retake">Retake</span>
+            </button>
+            <button id="ai-activate-btn" class="start-btn" onclick="activateAI()">
+                🤖 <span data-ar="تفعيل MechBrain AI" data-en="Activate MechBrain AI">Activate MechBrain AI</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let isArabic = false;
+        let currentIndex = 0;
+        let score = { correct: 0, wrong: 0, skipped: 0 };
+        let timerInterval;
+        let currentQuestions = [];
+
+        // بنك أسئلة شيت 1 (الأصلي)
+                // بنك أسئلة شيت 1 (الأصلي - كامل من الـ PDF)
+        const sheet1Questions = [
+            // أسئلة إكمال الفراغ (تم تحويلها لخيارات)
+            { type: 'mcq', q: 'The product cycle consists of two main stages: ________ and ________.', options: ['Design and Manufacturing', 'Heating and Cooling', 'Casting and Welding', 'Planning and Selling'], answer: 'Design and Manufacturing' },
+            { type: 'mcq', q: '________ is a process by which we ensure that the final product will be satisfactory.', options: ['Inspection', 'Production', 'Casting', 'Machining'], answer: 'Inspection' },
+            { type: 'mcq', q: 'Production is industrial techniques or methods by which ________ are converted into Semi-finished or finished Products.', options: ['Raw materials', 'Finished goods', 'Machine tools', 'Polymers'], answer: 'Raw materials' },
+            { type: 'mcq', q: 'A Safe Worker should consider personal grooming such as: Never wear ________ when operating a machine.', options: ['Loose clothing or jewelry', 'Safety glasses', 'Hard hats', 'Earplugs'], answer: 'Loose clothing or jewelry' },
+            { type: 'mcq', q: 'A Safe Worker should ensure that long hair must be protected by ________ or approved protective hairnet.', options: ['A cap', 'A tie', 'A helmet', 'Gloves'], answer: 'A cap' },
+            { type: 'mcq', q: 'For Safe Work Practices, before operating any machine, be sure that ________ are in place and in working order.', options: ['Guards', 'Cutting tools', 'Coolants', 'Wrenches'], answer: 'Guards' },
+            { type: 'mcq', q: 'For Safe Work Practices, always keep hands away from ________ parts.', options: ['Moving', 'Static', 'Hot', 'Electrical'], answer: 'Moving' },
+            { type: 'mcq', q: 'Brass is an alloy formed from ________ and ________.', options: ['Copper and Zinc', 'Copper and Tin', 'Iron and Carbon', 'Aluminum and Magnesium'], answer: 'Copper and Zinc' },
+            { type: 'mcq', q: 'Bronze is an alloy formed from ________ and ________.', options: ['Copper and Tin', 'Copper and Zinc', 'Iron and Carbon', 'Lead and Zinc'], answer: 'Copper and Tin' },
+            { type: 'mcq', q: 'Steel is an alloy of ________ and ________.', options: ['Iron and Carbon', 'Copper and Zinc', 'Aluminum and Iron', 'Iron and Silicon'], answer: 'Iron and Carbon' },
+            { type: 'mcq', q: 'The principal disadvantage of ceramic materials is their ________ nature.', options: ['Brittle', 'Ductile', 'Malleable', 'Elastic'], answer: 'Brittle' },
+            { type: 'mcq', q: 'Fibrous composites consist of ________ of one material suspended in a ________ of another material.', options: ['Fibers / Matrix', 'Alloys / Liquid', 'Polymers / Ceramic', 'Metals / Sand'], answer: 'Fibers / Matrix' },
+            { type: 'mcq', q: 'In Plain carbon steel, C45 means that Carbon content = ________.', options: ['0.45 %', '4.5 %', '45 %', '0.045 %'], answer: '0.45 %' },
+            { type: 'mcq', q: '________ is an alloy of iron and carbon containing (2 - 4.5% carbon).', options: ['Cast iron', 'Plain steel', 'Stainless steel', 'Wrought iron'], answer: 'Cast iron' },
+            { type: 'mcq', q: '________ is defined as the amount of load per unit cross-section area.', options: ['Stress', 'Strain', 'Ductility', 'Hardness'], answer: 'Stress' },
+            { type: 'mcq', q: '________ is calculated as the change in length divided by the original length.', options: ['Strain', 'Stress', 'Tension', 'Elasticity'], answer: 'Strain' },
+            { type: 'mcq', q: 'Specifications used in manufacturing include Size, Location, Material, and ________.', options: ['Surface finish', 'Weight', 'Color', 'Cost'], answer: 'Surface finish' },
+            
+            // أسئلة الاختيارات المتعددة (من سؤال 4 في الـ PDF)
+            { type: 'mcq', q: 'Which of the following is considered a Non-ferrous metal?', options: ['Aluminum', 'Cast-iron', 'Steel', 'Carbon steel'], answer: 'Aluminum' },
+            { type: 'mcq', q: 'Which of the following is classified as a Metal material?', options: ['Copper', 'Ceramic', 'Plastics', 'Wood'], answer: 'Copper' },
+            { type: 'mcq', q: 'Which of the following is classified as a Non-metal material?', options: ['Ceramic', 'Copper', 'Steel', 'Brass'], answer: 'Ceramic' },
+            { type: 'mcq', q: 'Thermoplastic polymers are materials that can be used in multiple ________ cycles.', options: ['Heating and cooling', 'Heating only', 'Cooling only', 'Melting and casting'], answer: 'Heating and cooling' },
+            { type: 'mcq', q: 'Safety in Workshop practices will prevent:', options: ['Both injury to workers and damage to equipment', 'Injury to workers only', 'Damage to equipment only', 'Machine overload'], answer: 'Both injury to workers and damage to equipment' },
+            { type: 'mcq', q: 'The operator should remember that for ________: Always stop the machine before you attempt to clean it.', options: ['Safe work practices', 'Good housekeeping', 'Personal grooming', 'Machine maintenance'], answer: 'Safe work practices' },
+            
+            // أسئلة مقالية تم تحويلها (من سؤال 5 في الـ PDF)
+            { type: 'mcq', q: 'What is the definition of Production?', options: ['Industrial techniques converting raw materials into finished products.', 'The process of drawing mechanical parts.', 'Melting metals into molds.', 'Adding layers of material to create a 3D object.'], answer: 'Industrial techniques converting raw materials into finished products.' },
+            
+            // أسئلة الصح والخطأ
+            { type: 'tf', q: 'Cast iron contains less carbon than plain carbon steel.', answer: false },
+            { type: 'tf', q: 'Ceramics perform excellently under high tensile loads due to their high ductility.', answer: false },
+            { type: 'tf', q: 'Good housekeeping is part of safe work practices in engineering workshops.', answer: true }
+        ];
+
+
+        // بنك أسئلة شيت 2 (الأصلي)
+                // بنك أسئلة شيت 2 (الأصلي - كامل من الـ PDF)
+        const sheet2Questions = [
+            { type: 'mcq', q: '________ means manufacturing through melting the material and pouring it into a prepared cavity (mold) having the same form of the workpiece.', options: ['Casting', 'Welding', 'Machining', 'Forging'], answer: 'Casting' },
+            { type: 'mcq', q: 'In ________ Casting, the mold cavity is machined in a metal block to form a permanent die.', options: ['Die', 'Sand', 'Centrifugal', 'Investment'], answer: 'Die' },
+            { type: 'mcq', q: 'In ________ Casting, sand with suitable properties is used for preparing the mold.', options: ['Sand', 'Die', 'Centrifugal', 'Investment'], answer: 'Sand' },
+            { type: 'mcq', q: 'In sand casting, sand molds can be used ________ and they must be destroyed to remove the finished casting.', options: ['Only once', 'Multiple times', 'Indefinitely', 'For 10 cycles'], answer: 'Only once' },
+            { type: 'mcq', q: 'In sand casting, ________ are the reservoirs of molten metal because metals shrink as they cool.', options: ['Feeders or Risers', 'In gates', 'Runners', 'Copes'], answer: 'Feeders or Risers' },
+            { type: 'mcq', q: 'Joining of metals can be achieved through Welding, Clamping, Riveting, and ________.', options: ['Adhesive bonding', 'Casting', 'Extrusion', 'Turning'], answer: 'Adhesive bonding' },
+            { type: 'mcq', q: '________ is the process of joining together two pieces of metal or metallic parts through heating.', options: ['Welding', 'Forging', 'Casting', 'Drawing'], answer: 'Welding' },
+            { type: 'mcq', q: '________ welding, is done through heat alone with or without filler material.', options: ['Fusion', 'Solid state', 'Resistance', 'Adhesive'], answer: 'Fusion' },
+            { type: 'mcq', q: '________ deformation: a temporary, reversible change in an object\'s shape or size caused by applied force.', options: ['Elastic', 'Plastic', 'Permanent', 'Shear'], answer: 'Elastic' },
+            { type: 'mcq', q: '________ deformation: the permanent, irreversible change in shape or size of a solid material that occurs when applied stress exceeds its yield strength.', options: ['Plastic', 'Elastic', 'Temporary', 'Reversible'], answer: 'Plastic' },
+            { type: 'mcq', q: '________ is the process of reducing the thickness or changing the cross-section of a long workpiece by compressive forces applied through a set of rolls.', options: ['Rolling', 'Extrusion', 'Drawing', 'Forging'], answer: 'Rolling' },
+            { type: 'mcq', q: '________ is the process that shapes metals by using compressive forces, such as hammering or pressing.', options: ['Forging', 'Rolling', 'Casting', 'Machining'], answer: 'Forging' },
+            { type: 'mcq', q: '________ involves pushing a material through a die for the purpose of modifying its cross-section.', options: ['Extrusion', 'Drawing', 'Rolling', 'Turning'], answer: 'Extrusion' },
+            { type: 'mcq', q: 'An electric arc is formed when two conductors of an electric circuit are brought together and then separated ________.', options: ['A short distance', 'A large distance', 'No distance', 'Immediately'], answer: 'A short distance' },
+            { type: 'mcq', q: '________ is a fusion process in which the required heat is obtained by a mixture of two Gases (usually Oxygen and Acetylene).', options: ['Gas welding', 'Arc welding', 'Casting', 'Brazing'], answer: 'Gas welding' },
+            { type: 'mcq', q: '________ is an industrial technique by which raw material is transformed into a product by removing excess material in the form of chips.', options: ['Machining', 'Joining', 'Casting', 'Forming'], answer: 'Machining' },
+            { type: 'mcq', q: 'Main Elements of a Machining Process are Machine Tool, ________, and Workpiece.', options: ['Cutting Tool', 'Fixture', 'Coolant', 'Operator'], answer: 'Cutting Tool' },
+            { type: 'mcq', q: 'Single-point cutting tools, such as Lathes, ________ and Planers.', options: ['Shapers', 'Milling', 'Drilling', 'Grinding'], answer: 'Shapers' },
+            { type: 'mcq', q: 'Multi-point cutting tools, such as twist drills, ________, reamers, grinding wheels, and abrasive disks.', options: ['Milling cutters', 'Turning tools', 'Shaping tools', 'Single-point tools'], answer: 'Milling cutters' },
+            { type: 'image_identify', q: 'Identify the highlighted part (Cyan Arrow #7) acting as the shrinkage reservoir:', svg: `<svg viewBox="0 0 200 150" style="width:100%; max-width:300px; border:1px solid var(--border-color); border-radius:10px; background:#0a0a0a;"><rect x="20" y="30" width="160" height="100" fill="none" stroke="#555" stroke-width="2"/><line x1="20" y1="80" x2="180" y2="80" stroke="#555" stroke-width="2" stroke-dasharray="4"/><path d="M 70 90 L 130 90 L 130 115 L 70 115 Z" fill="none" stroke="#888" stroke-width="2"/><path d="M 130 90 L 160 90 L 160 30" fill="none" stroke="#888" stroke-width="2"/><line x1="160" y1="30" x2="180" y2="15" stroke="var(--accent-color)" stroke-width="3"/><text x="185" y="20" fill="var(--accent-color)" font-size="14" font-weight="bold">#7</text></svg>`, options: ['Riser / Feeder', 'Core', 'Mold cavity', 'Runner'], answer: 'Riser / Feeder' }
+        ];
+
+
+        // بنك أسئلة الذكاء الاصطناعي (MechBrain AI)
+        const aiSheet1 = [
+            { type: 'mcq', q: 'Which of the following is NOT typically considered a main stage of the product cycle?', options: ['Design', 'Manufacturing', 'Marketing & Sales', 'Inspection'], answer: 'Marketing & Sales' },
+            { type: 'tf', q: 'A safe worker can wear loose clothing as long as they are standing at least 1 meter away from the machine.', answer: false },
+            { type: 'mcq', q: 'If an alloy is composed of Copper and Tin, it is strictly classified as:', options: ['Brass', 'Bronze', 'Cast Iron', 'High-carbon steel'], answer: 'Bronze' }
+        ];
+
+        const aiSheet2 = [
+            { type: 'tf', q: 'In sand casting, the mold cavity is machined from a solid metal block for permanent use.', answer: false },
+            { type: 'mcq', q: 'Which of the following welding processes relies strictly on pressure without any heat?', options: ['Fusion welding', 'Gas welding', 'Solid state welding', 'Arc welding'], answer: 'Solid state welding' },
+            { type: 'mcq', q: 'If the Clearance angle (α) is 10° and the Rake angle (γ) is 15°, what must the Lip angle (β) be for a standard single-point tool?', options: ['65°', '90°', '45°', '55°'], answer: '65°' }
+        ];
+
+        function toggleLang() {
+            isArabic = !isArabic;
+            document.getElementById('lang-text').innerText = isArabic ? "AR" : "EN";
+            document.querySelectorAll('[data-ar]').forEach(el => {
+                el.innerText = isArabic ? el.getAttribute('data-ar') : el.getAttribute('data-en');
+            });
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const current = body.getAttribute('data-theme');
+            body.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+        }
+
+        function activateAI() {
+            document.getElementById('mode-select').value = 'ai';
+            document.getElementById('count-select').value = 'all';
+            document.getElementById('end-screen').style.display = 'none';
+            startEngine();
+        }
+
+        function startEngine() {
+            const sheetSelection = document.getElementById('sheet-select').value;
+            const mode = document.getElementById('mode-select').value;
+            const countMode = document.getElementById('count-select').value;
+            
+            // تفعيل توهج النيون السماوي لوضع الذكاء الاصطناعي
+            if (mode === 'ai' || mode === 'hardcore') {
+                document.body.classList.add('ai-glow');
+            } else {
+                document.body.classList.remove('ai-glow');
+            }
+            
+            let selectedQuestions = [];
+            let baseSheet1 = (mode === 'ai' || mode === 'hardcore') ? aiSheet1 : sheet1Questions;
+            let baseSheet2 = (mode === 'ai' || mode === 'hardcore') ? aiSheet2 : sheet2Questions;
+            
+            if (sheetSelection === 'sheet1') selectedQuestions = [...baseSheet1];
+            else if (sheetSelection === 'sheet2') selectedQuestions = [...baseSheet2];
+            else if (sheetSelection === 'both') selectedQuestions = [...baseSheet1, ...baseSheet2];
+            
+            selectedQuestions.sort(() => Math.random() - 0.5);
+
+            if (countMode === '10' && selectedQuestions.length > 10) {
+                currentQuestions = selectedQuestions.slice(0, 10);
+            } else {
+                currentQuestions = selectedQuestions;
+            }
+            
+            currentIndex = 0;
+            score = { correct: 0, wrong: 0, skipped: 0 };
+            
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('quiz-container').style.display = 'flex';
+            document.getElementById('skip-btn').style.display = 'inline-block';
+            
+            if(mode === 'hardcore') {
+                document.getElementById('timer-bar').style.display = 'block';
+            } else {
+                document.getElementById('timer-bar').style.display = 'none';
+            }
+            
+            renderCard();
+        }
+
+        function renderCard() {
+            if (currentIndex >= currentQuestions.length) {
+                endQuiz(); return;
+            }
+
+            const q = currentQuestions[currentIndex];
+            
+            // تحديث العداد
+            const counterText = isArabic ? `السؤال ${currentIndex + 1} من ${currentQuestions.length}` : `Question ${currentIndex + 1} of ${currentQuestions.length}`;
+            document.getElementById('question-counter').innerText = counterText;
+
+            const area = document.getElementById('card-area');
+            area.innerHTML = ''; 
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            if (q.type === 'mcq') {
+                let html = `<div class="question-text">${q.q}</div><div class="options-grid">`;
+                let shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+                shuffledOptions.forEach(opt => {
+                    html += `<button class="option-btn" onclick="checkAnswer(this, '${opt}', '${q.answer}')">${opt}</button>`;
+                });
+                html += `</div>`;
+                card.innerHTML = html;
+            } 
+            else if (q.type === 'tf') {
+                card.innerHTML = `
+                    <div class="question-text" style="font-size:24px; margin-bottom:40px;">${q.q}</div>
+                    <div style="display:flex; justify-content:space-between; color:var(--text-muted); font-size:14px;">
+                        <span>👈 False</span>
+                        <span>True 👉</span>
+                    </div>
+                    <div style="margin-top:20px; display:flex; gap:10px;">
+                        <button class="option-btn" style="flex:1; text-align:center;" onclick="checkAnswer(this, true, ${q.answer})">True (✓)</button>
+                        <button class="option-btn" style="flex:1; text-align:center;" onclick="checkAnswer(this, false, ${q.answer})">False (✗)</button>
+                    </div>
+                `;
+            }
+            else if (q.type === 'image_identify') {
+                let html = `<div class="question-text">${q.q}</div>`;
+                html += `<div style="margin-bottom: 20px;">${q.svg}</div>`;
+                html += `<div class="options-grid">`;
+                let shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+                shuffledOptions.forEach(opt => {
+                    html += `<button class="option-btn" onclick="checkAnswer(this, '${opt}', '${q.answer}')">${opt}</button>`;
+                });
+                html += `</div>`;
+                card.innerHTML = html;
+            }
+            
+            area.appendChild(card);
+            
+            if (document.getElementById('mode-select').value === 'hardcore') {
+                startTimer();
+            }
+        }
+
+        function checkAnswer(btn, selected, correct) {
+            clearInterval(timerInterval);
+            document.body.classList.remove('hardcore-pulse');
+            document.getElementById('timer-bar').style.width = '100%';
+
+            if (String(selected) === String(correct)) {
+                score.correct++;
+                btn.style.background = 'var(--success-color)';
+                btn.style.color = '#000';
+                showToast(isArabic ? 'وحش! إجابة صحيحة 👍' : 'Correct! 👍', 'var(--success-color)');
+            } else {
+                score.wrong++;
+                btn.style.background = 'var(--error-color)';
+                btn.style.color = '#fff';
+                showToast(isArabic ? 'معوض خير 😕' : 'Wrong 😕', 'var(--error-color)');
+            }
+            
+            const allBtns = document.querySelectorAll('.option-btn');
+            allBtns.forEach(b => b.style.pointerEvents = 'none');
+
+            currentIndex++;
+            setTimeout(renderCard, 800);
+        }
+
+        function skipQuestion() {
+            clearInterval(timerInterval);
+            score.skipped++;
+            currentIndex++;
+            renderCard();
+        }
+
+        function showToast(msg, color) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.background = color;
+            toast.style.color = '#000';
+            toast.style.opacity = '1';
+            setTimeout(() => toast.style.opacity = '0', 800);
+        }
+
+        function startTimer() {
+            let timeLeft = 100; 
+            const bar = document.getElementById('timer-bar');
+            clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                timeLeft -= 1; 
+                bar.style.width = timeLeft + '%';
+                
+                if (timeLeft < 30) {
+                    document.body.classList.add('hardcore-pulse');
+                    bar.style.background = 'var(--error-color)';
+                    bar.style.boxShadow = '0 0 15px var(--error-color)';
+                } else {
+                    document.body.classList.remove('hardcore-pulse');
+                    bar.style.background = 'var(--accent-color)';
+                    bar.style.boxShadow = '0 0 15px var(--accent-color)';
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    skipQuestion(); 
+                }
+            }, 70); 
+        }
+
+        function endQuiz() {
+            document.getElementById('quiz-container').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'flex';
+            document.getElementById('skip-btn').style.display = 'none';
+            document.body.classList.remove('hardcore-pulse');
+            
+            const total = score.correct + score.wrong + score.skipped;
+            const percentage = total === 0 ? 0 : (score.correct / total) * 100;
+            
+            document.getElementById('final-score').innerText = `${score.correct} / ${total}`;
+            
+            const messagesExcellent = [
+                "وحش! قفلت المادة 🤩💪", "Nailed it! You're ready for the final 🌟",
+                "ولا غلطة! مهندس قد الدنيا 🛠️🔥", "Perfect score! Engineering at its finest ⚙️👑",
+                "أداء أسطوري، الميكانيكا لعبتك 😎✨", "Flawless! Keep up this awesome energy 🔥",
+                "ختمت الشيت يا بطل 🏆", "Genius mode activated 🧠✨", "الدكتور بيفتخر فيك 👏"
+            ];
+            const messagesGood = [
+                "بطل، بس يبي لك مراجعة بسيطة 😉", "Great job! Just a few minor mistakes 👍",
+                "أداء ممتاز، ركز في التريكات البسيطة 🎯", "Almost perfect, just a quick review needed 📚",
+                "قريب جداً من الفل مارك، كفو 👏", "Well done! You've got the concepts down ⚙️",
+                "وحش، بس غلطاتك قهر 😅", "Solid performance! Keep pushing 🚀", "فالك الـ A ان شاء الله 🌟"
+            ];
+            const messagesAverage = [
+                "عديت، بس تحتاج تركز أكثر 🤔", "Not bad, but room for improvement 📈",
+                "نص ونص.. راجع الشيتات مرة ثانية 📖", "You passed, but a little more focus will help 🔍",
+                "يبيلك شدة حيل يا بطل 🏃‍♂️", "Keep pushing! Review the tricky parts 🛠️",
+                "الأساسيات موجودة، بس تحتاج تثبيت 🏗️", "Don't stop here, you can do better 💪", "مقبول، بس مو هذا طموحنا 🎯"
+            ];
+            const messagesPoor = [
+                "معوض خير، جرب مرة ثانية :(", "Nice try, but you need to study more 😕",
+                "المرة الجاية بتجيبها، لا تيأس 🔄", "Don't give up! Try again after reviewing 📚",
+                "الظاهر تحتاج كوب قهوة ومراجعة سريعة ☕💔", "Ouch :( Let's review the notes and re-take it 🔄",
+                "التكرار يعلم الشطار، صح؟ 😅", "Time to open the PDF again 📖", "ما عليه، الضربة اللي ما تقتلك تقويك 🛠️"
+            ];
+
+            let messageArray = [];
+            if (percentage >= 90) messageArray = messagesExcellent;
+            else if (percentage >= 75) messageArray = messagesGood;
+            else if (percentage >= 50) messageArray = messagesAverage;
+            else messageArray = messagesPoor;
+            
+            const randomMessage = messageArray[Math.floor(Math.random() * messageArray.length)];
+            
+            document.getElementById('final-message').innerText = randomMessage;
+        }
+
+        document.body.setAttribute('data-theme', 'dark');
+    </script>
+</body>
+</html>
